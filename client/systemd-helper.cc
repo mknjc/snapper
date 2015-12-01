@@ -81,6 +81,12 @@ cleanup(DBus::Connection* conn)
 	{
 	    do_cleanup_empty_pre_post(*conn, config_info.config_name, false);
 	}
+	
+	map<string, string>::const_iterator pos4 = config_info.raw.find("EMPTY_TIMELINE_CLEANUP");
+	if (pos4 != config_info.raw.end() && pos4->second == "yes")
+	{
+	    do_cleanup_empty_timeline(*conn, config_info.config_name, false);
+	}
     }
 }
 

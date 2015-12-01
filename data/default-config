@@ -43,6 +43,10 @@ TIMELINE_LIMIT_WEEKLY="0"
 TIMELINE_LIMIT_MONTHLY="10"
 TIMELINE_LIMIT_YEARLY="10"
 
+# cleanup of timeline snapshots which did not contain new changes
+EMPTY_TIMELINE_CLEANUP="yes"
+
+EMPTY_TIMELINE_MIN_AGE="1800"
 
 # cleanup empty pre-post-pairs
 EMPTY_PRE_POST_CLEANUP="yes"

@@ -39,6 +39,10 @@ for CONFIG in $SNAPPER_CONFIGS ; do
 	snapper --config=$CONFIG --quiet cleanup empty-pre-post
     fi
 
+    if [ "$EMPTY_TIMELINE_CLEANUP" = "yes" ] ; then
+	snapper --config=$CONFIG --quiet cleanup empty-timeline
+    fi
+
 done
 
 exit 0

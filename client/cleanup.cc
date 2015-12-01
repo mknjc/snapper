@@ -24,6 +24,8 @@
 
 #include <snapper/SnapperTmpl.h>
 
+#include <snapper/AppUtil.h>
+
 #include "utils/equal-date.h"
 
 #include "commands.h"
@@ -371,6 +373,60 @@ do_cleanup_empty_pre_post(DBus::Connection& conn, const string& config_name, boo
 	nums.push_back((*it)->getNum());
 	command_delete_xsnapshots(conn, config_name, nums, verbose);
     }
+
+    return true;
+}
+
+bool
+do_cleanup_empty_timeline(DBus::Connection& conn, const string& config_name, bool verbose)
+{
+    time_t min_age = 1800;
+
+    XConfigInfo ci = command_get_xconfig(conn, config_name);
+    map<string, string>::const_iterator pos;
+    if ((pos = ci.raw.find("EMPTY_TIMELINE_MIN_AGE")) != ci.raw.end())
+	pos->second >> min_age;
+
+    XSnapshots snapshots = command_list_xsnapshots(conn, config_name);
+
+    list<XSnapshots::const_iterator> snapshotList;
+
+    for (XSnapshots::const_iterator it = snapshots.begin(); it != snapshots.end(); ++it)
+    {
+	if (it->getCleanup() == "timeline")
+	{
+	    snapshotList.push_back(it);
+	}
+    }
+    filter1(snapshotList, min_age);
+    
+    snapshotList.sort( []( const XSnapshots::const_iterator&a, const XSnapshots::const_iterator&b ) { return a->getDate() < b->getDate(); } );
+
+    list<unsigned int> nums;
+    
+    for (list<XSnapshots::const_iterator>::const_reverse_iterator it = snapshotList.crbegin(); it != snapshotList.crend(); )
+    {
+        
+	const XSnapshot newSnapshot = (*(*it));
+	if (++it ==  snapshotList.crend())
+	    break;
+	
+	const XSnapshot oldSnapshot = (*(*it));
+	
+	command_create_xcomparison(conn,  config_name,  oldSnapshot.getNum(), newSnapshot.getNum());
+
+	list<XFile> files = command_get_xfiles(conn, config_name, oldSnapshot.getNum(), newSnapshot.getNum());
+
+	if (files.empty())
+	{
+	    if (verbose)
+		std::cout <<  "Cleanup-empty-timeline: " << datetime(newSnapshot.getDate(), false, false) << " (" <<  newSnapshot.getNum() << ") removed by " << datetime(oldSnapshot.getDate(), false, false) << " (" <<  oldSnapshot.getNum() << ")" << std::endl;
+	    nums.push_back(newSnapshot.getNum());
+	}
+	command_delete_xcomparison(conn, config_name, oldSnapshot.getNum(), newSnapshot.getNum());
+    }
+
+    command_delete_xsnapshots(conn, config_name,  nums,  verbose);
 
     return true;
 }

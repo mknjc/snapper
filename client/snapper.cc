@@ -1435,6 +1435,10 @@ command_cleanup(DBus::Connection* conn, Snapper* snapper)
     {
 	do_cleanup_empty_pre_post(*conn, config_name, verbose);
     }
+    else if (cleanup == "empty-timeline")
+    {
+	do_cleanup_empty_timeline(*conn, config_name, verbose);
+    }
     else
     {
 	cerr << sformat(_("Unknown cleanup algorithm '%s'."), cleanup.c_str()) << endl;
